@@ -8,4 +8,4 @@ spark-warehouse/
 src/test/
 target/
 
-SparkSQL.iml
+*.iml
