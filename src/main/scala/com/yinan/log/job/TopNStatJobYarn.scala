@@ -9,10 +9,10 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.collection.mutable.ListBuffer
 
-object TopNStatJob {
+object TopNStatJobYarn {
 
   /**
-    * 最受欢迎的课程TOP N
+    * 最受欢迎的课程TOP N on Yarn
     *
     * @param spark
     * @param accessDF
@@ -108,10 +108,13 @@ object TopNStatJob {
   }
 
   def main(args: Array[String]): Unit = {
-    val spark: SparkSession = SparkSession.builder().appName("SparkStatCleanJob").master("local[2]")
-      .config("spark.sql.sources.partitionColumnTypeInference.enabled", value = false).getOrCreate()
+    if (args.length != 2) {
+      print("Usage: TopNStatJobYarn <inputPath> <outputPath>")
+      System.exit(1)
+    }
+    val spark: SparkSession = SparkSession.builder().config("spark.sql.sources.partitionColumnTypeInference.enabled", value = false).getOrCreate()
+    val Array(inputPath, day) = args
     val accessDF = spark.read.format("parquet").load("file:///Users/yinan/Documents/BigData/SparkSQL/data/clean")
-    val day = "20170511"
     StatDao.deleteDataByDay(day)
     //最受欢迎的课程（访问量最高）
     videoAccessTopNStat(spark, accessDF, day)

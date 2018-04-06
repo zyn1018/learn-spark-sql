@@ -7,7 +7,7 @@ import org.apache.spark.sql.SparkSession
   * 数据清洗
   */
 object SparkStatCleanJob {
-  def main(args: Array[String]) = {
+  def main(args: Array[String]): Unit = {
 
     val spark: SparkSession = SparkSession.builder().appName("SparkStatCleanJob").master("local[2]").getOrCreate()
     val accessRDD = spark.sparkContext.textFile("file:///Users/yinan/Documents/BigData/SparkSQL/data/access.log")
