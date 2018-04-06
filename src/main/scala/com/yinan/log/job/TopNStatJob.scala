@@ -17,11 +17,11 @@ object TopNStatJob {
     * @param spark
     * @param accessDF
     */
-  def videoAccessTopNStat(spark: SparkSession, accessDF: sql.DataFrame, day: String): Unit = {
+  def videoAccessTopNStat(spark: SparkSession, accessDF: sql.DataFrame): Unit = {
 
     // via DataFrame API
     import spark.implicits._
-    val videoAccessTopNDF = accessDF.filter($"day" === day && $"cmsType" === "video").groupBy("day", "cmsId").agg(count("cmsId").as("times")).orderBy($"times".desc)
+    val videoAccessTopNDF = accessDF.groupBy("day", "cmsId").agg(count("cmsId").as("times")).orderBy($"times".desc)
 
     // via SQL
     //    accessDF.createOrReplaceTempView("access_logs")
@@ -52,10 +52,9 @@ object TopNStatJob {
     * @param accessDF
     * @return
     */
-  def cityAccessTopNStat(spark: SparkSession, accessDF: DataFrame, day: String): Unit = {
+  def cityAccessTopNStat(spark: SparkSession, accessDF: DataFrame): Unit = {
     // via DataFrame API
-    import spark.implicits._
-    val cityAccessTopNDF = accessDF.filter($"day" === day && $"cmsType" === "video").groupBy("day", "city", "cmsId").agg(count("cmsId").as("times"))
+    val cityAccessTopNDF = accessDF.groupBy("day", "city", "cmsId").agg(count("cmsId").as("times"))
 
     // Window in Spark SQL
     val cityTopDF = cityAccessTopNDF.select(cityAccessTopNDF("day"),
@@ -86,9 +85,9 @@ object TopNStatJob {
     }
   }
 
-  def videoTrafficsTopNStat(spark: SparkSession, accessDF: DataFrame, day: String): Unit = {
+  def videoTrafficsTopNStat(spark: SparkSession, accessDF: DataFrame): Unit = {
     import spark.implicits._
-    val trafficAccessTopNDF = accessDF.filter($"day" === day && $"cmsType" === "video").groupBy("day", "cmsId").agg(sum("traffic").as("traffics")).orderBy($"traffics".desc)
+    val trafficAccessTopNDF = accessDF.groupBy("day", "cmsId").agg(sum("traffic").as("traffics")).orderBy($"traffics".desc)
     try {
       trafficAccessTopNDF.foreachPartition(partitionOfRecords => {
         val list = new ListBuffer[DayVideoTrafficsStat]
@@ -112,15 +111,21 @@ object TopNStatJob {
       .config("spark.sql.sources.partitionColumnTypeInference.enabled", value = false).getOrCreate()
     val accessDF = spark.read.format("parquet").load("file:///Users/yinan/Documents/BigData/SparkSQL/data/clean")
     val day = "20170511"
+
+    import spark.implicits._
+    val commonDF = accessDF.filter($"day" === day && $"cmsType" === "video")
+    commonDF.cache()
     StatDao.deleteDataByDay(day)
     //最受欢迎的课程（访问量最高）
-    videoAccessTopNStat(spark, accessDF, day)
+    videoAccessTopNStat(spark, commonDF)
 
     //按照城市进行统计TopN课程
-    cityAccessTopNStat(spark, accessDF, day)
+    cityAccessTopNStat(spark, commonDF)
 
     //按照流量进行统计
-    videoTrafficsTopNStat(spark, accessDF, day)
+    videoTrafficsTopNStat(spark, commonDF)
+
+    commonDF.unpersist(true);
     spark.stop()
   }
 
