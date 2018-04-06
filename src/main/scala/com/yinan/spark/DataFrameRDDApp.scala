@@ -11,7 +11,7 @@ object DataFrameRDDApp {
     spark.stop()
   }
 
-  private def inferReflection(spark: SparkSession) = {
+  private def inferReflection(spark: SparkSession): Unit = {
     val rdd = spark.sparkContext.textFile("/Users/yinan/Desktop/infos.txt")
 
     import spark.implicits._
@@ -24,7 +24,7 @@ object DataFrameRDDApp {
     spark.sql("select * from infos where age > 30").show()
   }
 
-  private def program(spark: SparkSession) = {
+  private def program(spark: SparkSession): Unit = {
     val rdd = spark.sparkContext.textFile("/Users/yinan/Desktop/infos.txt")
     val infoRDD = rdd.map(_.split(",")).map(line => Row(line(0).toInt, line(1), line(2).toInt))
 

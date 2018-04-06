@@ -1,0 +1,11 @@
+# Created by .ignore support plugin (hsz.mobi)
+### Scala template
+*.class
+*.log
+
+.idea/
+spark-warehouse/
+src/test/
+target/
+
+SparkSQL.iml
